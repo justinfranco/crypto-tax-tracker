@@ -26,7 +26,7 @@ type accountTransactions struct {
 		Gasprice    string `json:"gasPrice"`
 		Gasused     int    `json:"gasUsed"`
 		Status      string `json:"status"`
-		Timestamp   int    `json:"timestamp"`
+		Timestamp   int64  `json:"timestamp"`
 		From        string `json:"from"`
 		To          string `json:"to"`
 		Frombalance string `json:"fromBalance"`
@@ -38,8 +38,41 @@ type accountTransactions struct {
 }
 
 func GetAccountInfo(walletAddress string) *accountInfo {
+	url := "https://cerebro.cortexlabs.ai/mysql?addressId=" + walletAddress + "&type=accountInfo"
+
+	bodyBytes := callCortexAPI(url)
+
+	var responseObject accountInfo
+	json.Unmarshal(bodyBytes, &responseObject)
+
+	return &responseObject
+}
+
+func GetAccountTransactions(walletAddress string) *accountTransactions {
+	url := "https://cerebro.cortexlabs.ai/mysql?addressId=" + walletAddress + "&type=addrTX&begin=0&end=9999999999"
+
+	bodyBytes := callCortexAPI(url)
+
+	var responseObject accountTransactions
+	json.Unmarshal(bodyBytes, &responseObject)
+
+	return &responseObject
+
+}
+
+func GetAccountBalance(accountInfo *accountInfo) float64 {
+	balance, err := strconv.ParseFloat(accountInfo.Balance, 64)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	balance = balance / float64(1000000000000000000)
+
+	return balance
+}
+
+func callCortexAPI(url string) []byte {
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://cerebro.cortexlabs.ai/mysql?addressId="+walletAddress+"&type=accountInfo", nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -56,18 +89,5 @@ func GetAccountInfo(walletAddress string) *accountInfo {
 		fmt.Println(err.Error())
 	}
 
-	var responseObject accountInfo
-	json.Unmarshal(bodyBytes, &responseObject)
-
-	return &responseObject
-}
-
-func GetAccountBalance(accountInfo *accountInfo) float64 {
-	balance, err := strconv.ParseFloat(accountInfo.Balance, 64)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	balance = balance / float64(1000000000000000000)
-
-	return balance
+	return bodyBytes
 }
