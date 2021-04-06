@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cryptoTracker/apiUtils"
 	"cryptoTracker/cortex"
 	"encoding/csv"
 	"fmt"
@@ -12,7 +13,7 @@ func main() {
 	walletAddress := os.Args[1]
 	blockchain := os.Args[2]
 
-	data := [][]string{{"Date", "Wallet Address", "Sender Address", "Value (CAD)", "Transaction Hash"}}
+	data := [][]string{{"Date", "Wallet Address", "Sender Address", "Value (CTXC)", "Value (CAD)", "Transaction Hash"}}
 
 	switch blockchain {
 	case "cortex":
@@ -23,11 +24,14 @@ func main() {
 		accountTransactions := cortex.GetAccountTransactions(walletAddress)
 		fmt.Printf("Your wallet has %v transactions \n", accountTransactions.Length)
 
+		priceStore := make(map[string]string)
 		for _, transaction := range accountTransactions.Result {
+			transactionPrice := apiUtils.GetTransactionValue(blockchain, transaction.Timestamp, priceStore)
 			dataRow := []string{time.Unix(transaction.Timestamp, 0).String(),
 				transaction.To,
 				transaction.From,
 				transaction.Value,
+				transactionPrice,
 				transaction.Hash}
 			data = append(data, dataRow)
 		}

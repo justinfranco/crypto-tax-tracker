@@ -1,10 +1,9 @@
 package cortex
 
 import (
+	"cryptoTracker/apiUtils"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strconv"
 )
 
@@ -40,7 +39,7 @@ type accountTransactions struct {
 func GetAccountInfo(walletAddress string) *accountInfo {
 	url := "https://cerebro.cortexlabs.ai/mysql?addressId=" + walletAddress + "&type=accountInfo"
 
-	bodyBytes := callCortexAPI(url)
+	bodyBytes := apiUtils.CallJsonAPI(url)
 
 	var responseObject accountInfo
 	json.Unmarshal(bodyBytes, &responseObject)
@@ -51,7 +50,7 @@ func GetAccountInfo(walletAddress string) *accountInfo {
 func GetAccountTransactions(walletAddress string) *accountTransactions {
 	url := "https://cerebro.cortexlabs.ai/mysql?addressId=" + walletAddress + "&type=addrTX&begin=0&end=9999999999"
 
-	bodyBytes := callCortexAPI(url)
+	bodyBytes := apiUtils.CallJsonAPI(url)
 
 	var responseObject accountTransactions
 	json.Unmarshal(bodyBytes, &responseObject)
@@ -68,26 +67,4 @@ func GetAccountBalance(accountInfo *accountInfo) float64 {
 	balance = balance / float64(1000000000000000000)
 
 	return balance
-}
-
-func callCortexAPI(url string) []byte {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	return bodyBytes
 }
