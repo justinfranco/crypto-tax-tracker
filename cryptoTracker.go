@@ -24,14 +24,24 @@ func main() {
 		accountTransactions := cortex.GetAccountTransactions(walletAddress)
 		fmt.Printf("Your wallet has %v transactions \n", accountTransactions.Length)
 
-		priceStore := make(map[string]string)
+		startTimestamp, endTimestamp := accountTransactions.Result[0].Timestamp, accountTransactions.Result[0].Timestamp
 		for _, transaction := range accountTransactions.Result {
-			transactionPrice := apiUtils.GetTransactionValue(blockchain, transaction.Timestamp, priceStore)
+			if transaction.Timestamp < startTimestamp {
+				startTimestamp = transaction.Timestamp
+			}
+			if transaction.Timestamp > endTimestamp {
+				endTimestamp = transaction.Timestamp
+			}
+		}
+		
+		transactionPrices := apiUtils.GetTransactionValues(blockchain, "cad", startTimestamp, endTimestamp)
+		for _, transaction := range accountTransactions.Result {
+			
 			dataRow := []string{time.Unix(transaction.Timestamp, 0).String(),
 				transaction.To,
 				transaction.From,
 				transaction.Value,
-				transactionPrice,
+				transactionPrices["2020"],
 				transaction.Hash}
 			data = append(data, dataRow)
 		}

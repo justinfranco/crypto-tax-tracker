@@ -1,13 +1,16 @@
 package apiUtils
 
-import "testing"
+import (
+	"testing"
+)
 
-func TestGetTransactionValue(t *testing.T) {
+func TestGetTransactionValues(t *testing.T) {
 	const coinId = "cortex"
-	const unixTimestamp = 1615030537 //	Sat Mar 06 2021 11:35:37 GMT+0000
-	priceStore := make(map[string]string)
-	value := GetTransactionValue(coinId, unixTimestamp, priceStore)
-	if value != "0.2207229133399098" {
-		t.Errorf("Value was %v but was suppose to be 0.2207229133399098", value)
+	const currency = "cad"
+	const unixTimestampStart = 1634734226 // Wed Oct 20 2021 12:50:26 GMT+0000
+	const unixTimestampEnd = 1635743460 // Sun Oct 31 2021 23:11:00 GMT-0600
+	transactionvalues := GetTransactionValues(coinId, currency, unixTimestampStart, unixTimestampEnd)
+	if transactionvalues["2021-10-21"] != "0.28344685601454134" {
+		t.Errorf("Value was %v but was suppose to be 0.28344685601454134", transactionvalues["2021-10-21"])
 	}
 }
