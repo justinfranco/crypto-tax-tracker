@@ -36,12 +36,13 @@ func main() {
 		
 		transactionPrices := apiUtils.GetTransactionValues(blockchain, "cad", startTimestamp, endTimestamp)
 		for _, transaction := range accountTransactions.Result {
-			
-			dataRow := []string{time.Unix(transaction.Timestamp, 0).String(),
+			transactionTimestamp := time.Unix(transaction.Timestamp, 0)
+			dataRow := []string{
+				transactionTimestamp.String(),
 				transaction.To,
 				transaction.From,
 				transaction.Value,
-				transactionPrices["2020"],
+				transactionPrices[transactionTimestamp.Format("2006-01-02")],
 				transaction.Hash}
 			data = append(data, dataRow)
 		}

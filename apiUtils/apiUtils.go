@@ -34,7 +34,8 @@ func CallJsonAPI(url string) []byte {
 func GetTransactionValues(coinId string, currency string, startTimestamp int64, endTimestamp int64) map[string]string {
 	priceStore := make(map[string]string)
 
-	url := "https://api.coingecko.com/api/v3/coins/" + coinId + "/market_chart/range?vs_currency=" + currency + "&from=" + strconv.FormatInt(startTimestamp, 10) + "&to=" + strconv.FormatInt(endTimestamp, 10)
+	// Add/subtract 86,400 seconds to the timestamps to get the full price data for the entire day
+	url := "https://api.coingecko.com/api/v3/coins/" + coinId + "/market_chart/range?vs_currency=" + currency + "&from=" + strconv.FormatInt((startTimestamp - 86400), 10) + "&to=" + strconv.FormatInt((endTimestamp + 86400), 10)
 
 	bodyBytes := CallJsonAPI(url)
 
@@ -44,10 +45,23 @@ func GetTransactionValues(coinId string, currency string, startTimestamp int64, 
 		fmt.Println(err.Error())
 	}
 
-	// TODO: This currently takes the last price of the day. It should probably average all the reported prices throughout a day.
-	// However for now this will be accurate enough.
+	// Currently records the highest prices found for each day
 	for _, dailyData := range responseObject["prices"] {
-		priceStore[time.UnixMilli(int64(dailyData[0])).Format("2006-01-02")] = strconv.FormatFloat(dailyData[1], 'f', -1, 64) 
+		transactionDate := time.UnixMilli(int64(dailyData[0])).Format("2006-01-02")
+		transactionValuefloat := dailyData[1]
+		transactionValueString := strconv.FormatFloat(dailyData[1], 'f', -1, 64)
+
+		if currentValueString, exists := priceStore[transactionDate]; exists {
+			currentValueFloat, err := strconv.ParseFloat(currentValueString, 64)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			if transactionValuefloat > currentValueFloat {
+					priceStore[transactionDate] = transactionValueString
+			}
+		} else {
+			priceStore[transactionDate] = transactionValueString
+		}
 	}
 
 	return priceStore
